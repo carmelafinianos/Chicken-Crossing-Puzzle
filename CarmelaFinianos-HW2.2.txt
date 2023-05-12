@@ -1,0 +1,504 @@
+import itertools
+import networkx as nx
+import heapq
+import sys
+import matplotlib.pyplot as plt
+graph_neighbours = {}
+
+initial = (['N', 'F'], ['N', 'F'], ['N', 'F'], ['N', 'F'])
+
+a = []
+r = []
+l = []
+"""Generate all possible states"""
+for element in itertools.product(*initial):
+    a.append(element)
+    
+"""Filter out failed states"""
+for i in a:
+    j = i
+    f = a.index(i)
+    if j[1] == j[2] and j[0] !=j [2]:
+        a.remove(a[f])
+    if j[2] == j[3] and j[0] != j[2]:
+        a.remove(a[f])
+
+for p in a:
+    j = p
+    f = a.index(p)
+    if j[0] == 'N':
+        r.append(a[f])
+    if j[0] == 'F':
+        l.append(a[f])
+    if j[0] == 'N' and j[2] == 'F' and j[2] == j[3]:
+        r.remove(a[f])
+        
+ #"""Generate possible links between states"""
+k = []
+for w in r:
+    k.append(w)
+for y in l:
+    k.append(y)
+
+p1 = []
+f1 = []
+
+for o in r:
+    for k1 in l:
+        n1 = 0
+        n3 = 0
+        new_list = []
+        for p in range(len(k1)):
+            if k1[p]==o[p]:
+                n1+=1
+            if o[p]=='F'and k1[p]=='N':
+                n1=0
+                break
+        if n1>=1:
+                p1.append(o)
+                f1.append(k1)
+
+"""This is to be able to visualize the final path in terms of states"""
+def returnpath1(name):
+    paths=[]
+    for i in name:
+        if i==(('N', 'N', 'N', 'N')):
+            paths.append(0)
+        elif i==('N', 'N', 'N', 'F'):
+            paths.append(1)
+        elif i==('N', 'N', 'F', 'N'):
+            paths.append(2)
+        elif i==('N', 'F', 'N', 'N'):
+            paths.append(3)
+        elif i==('N', 'F', 'N', 'F'):
+            paths.append(4)
+        elif i==('F', 'N', 'F', 'N'):
+            paths.append(5)
+        elif i==('F', 'N', 'F', 'F'):
+            paths.append(6)
+        elif i==('F', 'F', 'N', 'F'):
+            paths.append(7)
+        elif i==('F', 'F', 'F', 'N'):
+            paths.append(8)
+        elif i==('F', 'F', 'F', 'F'):
+            paths.append(9)
+    return(paths)
+
+def returnpath(name):
+    paths=[]
+    for i in name:
+        if i=='0':
+            paths.append(('N', 'N', 'N', 'N'))
+        elif i=='1':
+            paths.append(('N', 'N', 'N', 'F'))
+        elif i=='2':
+            paths.append(('N', 'N', 'F', 'N'))
+        elif i=='3':
+            paths.append(('N', 'F', 'N', 'N'))
+        elif i=='4':
+            paths.append(('N', 'F', 'N', 'F'))
+        elif i=='5':
+            paths.append(('F', 'N', 'F', 'N'))
+        elif i=='6':
+            paths.append(('F', 'N', 'F', 'F'))
+        elif i=='7':
+            paths.append(('F', 'F', 'N', 'F'))
+        elif i=='8':
+            paths.append(('F', 'F', 'F', 'N'))
+        elif i=='9':
+            paths.append(('F', 'F', 'F', 'F'))
+    return(paths)
+def returnpathint(i):
+    l=0
+    if i==(('N', 'N', 'N', 'N')):
+        l=0
+    elif i==('N', 'N', 'N', 'F'):
+        l=1
+    elif i==('N', 'N', 'F', 'N'):
+        l=2
+    elif i==('N', 'F', 'N', 'N'):
+        l=3
+    elif i==('N', 'F', 'N', 'F'):
+        l=4
+    elif i==('F', 'N', 'F', 'N'):
+        l=5
+    elif i==('F', 'N', 'F', 'F'):
+        l=6
+    elif i==('F', 'F', 'N', 'F'):
+        l=7
+    elif i==('F', 'F', 'F', 'N'):
+        l=8
+    elif i==('F', 'F', 'F', 'F'):
+        l=9
+    return(l)
+
+"""Generate the neigbors"""
+def generate_graph():
+    lis=[]
+    arr=[]
+    leng = len(p1) - 1
+    m = 0
+    kp = 0
+    j1 = []
+    for i in range(len(p1)):
+        if i == 0:
+            m = p1[i]
+            j1.append(f1[i])
+            lis.append(m)
+            lis.append(f1[i])
+            arr.append(lis)
+            lis=[]
+        elif i != 0 and p1[i - 1] == p1[i]:
+            j1.append(f1[i])
+            m = p1[i]
+            lis.append(m)
+            lis.append(f1[i])
+            arr.append(lis)
+            lis=[]
+        else:
+            r=p1[i]
+            lis.append(r)
+            lis.append(f1[i])
+            arr.append(lis)
+            lis = []
+            m=returnpathint(m)
+            j1=returnpath1(j1)
+            add_neighbours(m, j1)
+            j1 = []
+            j1.append(f1[i])
+        if i == leng and p1[i - 1] == p1[i]:
+            m = returnpathint(m)
+            j1 = returnpath1(j1)
+            add_neighbours(m, j1)
+
+    k = []
+    for p in range(len(f1)):
+        n1 = 0
+        if p == 0:
+            k.append(f1[p])
+        if p != 0:
+            for l in k:
+                if l == f1[p]:
+                    n1 += 1
+            if n1 == 0:
+                k.append(f1[p])
+    on = []
+    for l in k:
+        for p in range(len(f1)):
+            if l == f1[p]:
+                on.append(p1[p])
+
+        l = returnpathint(l)
+        on= returnpath1(on)
+        add_neighbours(l, on)
+        on = []
+"""Generate the link Graph"""
+    G = nx.DiGraph()
+    G.add_nodes_from(k)
+    G.add_edges_from(arr)
+    nx.draw(G, with_labels=True, font_weight='bold',node_color='yellow')
+    plt.show()
+    return graph_neighbours
+
+
+
+
+
+def add_neighbours(node, neighbours):
+    new_list = []
+    for val in neighbours:
+        if val is not None and not val == '':
+            new_list.append(str(val))
+    graph_neighbours[str(node)] = new_list
+
+
+# fetches the largest value a variable of data type can store
+max_possible_value = sys.maxsize
+
+
+# Priority Queue Class
+class PriorityQueue(object):
+    """
+    A queue structure where each element is served in order of priority.
+    Elements in the queue are popped based on the priority with higher priority
+    elements being served before lower priority elements.  If two elements have
+    the same priority, they will be served in the order they were added to the
+    queue.
+    """
+
+    def __init__(self):
+        """Initialize a new Priority Queue."""
+
+        self.queue = []
+
+    def pop(self):
+        """
+        Pop top priority node from queue.
+        Returns:
+            The node with the highest priority.
+        """
+        return heapq.heappop(self.queue)
+
+    def remove(self, node_id):
+        """
+        Remove a node from the queue.
+        This is a hint, you might require this in ucs,
+        however, if you choose not to use it, you are free to
+        define your own method and not use it.
+        Args:
+            node_id (int): Index of node in queue.
+        """
+        self.queue.pop(node_id)
+        heapq.heapify(self.queue)
+
+    def __iter__(self):
+        """Queue iterator."""
+
+        return iter(sorted(self.queue))
+
+    def __str__(self):
+        """Priority Queue to string."""
+
+        return 'PQ:%s' % self.queue
+
+    def append(self, node):
+        """
+        Append a node to the queue.
+        Args:
+            node: Comparable Object to be added to the priority queue.
+        """
+        heapq.heappush(self.queue, node)
+
+    def __contains__(self, key):
+        """
+        Containment Check operator for 'in'
+        Args:
+            key: The key to check for in the queue.
+        Returns:
+            True if key is found in queue, False otherwise.
+        """
+
+        return key in [n for _, n in self.queue]
+
+    def __eq__(self, other):
+        """
+        Compare this Priority Queue with another Priority Queue.
+        Args:
+            other (PriorityQueue): Priority Queue to compare against.
+        Returns:
+            True if the two priority queues are equivalent.
+        """
+
+        return self.queue == other.queue
+
+    def size(self):
+        """
+        Get the current size of the queue.
+        Returns:
+            Integer of number of items in queue.
+        """
+
+        return len(self.queue)
+
+    def clear(self):
+        """Reset queue to empty (no nodes)."""
+
+        self.queue = []
+
+    def top(self):
+        """
+        Get the top item in the queue.
+        Returns:
+            The first item stored in teh queue.
+        """
+
+        if len(self.queue) > 0:
+            return self.queue[0]
+        else:
+            return 0, None
+
+
+# Search for the best path using Uniform Cost Search Algorithm
+
+def uniform_cost_search(graph, start, goal):
+    path = []
+    explored_nodes = list()
+
+    if start == goal:
+        return path, explored_nodes
+
+    path.append(start)
+    path_cost = 0
+
+    frontier = [(path_cost, path)]
+    while len(frontier) > 0:
+        # pop a node from the queue
+        path_cost_till_now, path_till_now = pop_frontier(frontier)
+        current_node = path_till_now[-1]
+        explored_nodes.append(current_node)
+
+        # test goal condition
+        if current_node == goal:
+            return path_till_now, explored_nodes
+
+        neighbours = graph[current_node]
+
+        neighbours_list_int = [int(n) for n in neighbours]
+        neighbours_list_int.sort(reverse=False)
+        neighbours_list_str = [str(n) for n in neighbours_list_int]
+
+        for neighbour in neighbours_list_str:
+            path_to_neighbour = path_till_now.copy()
+            path_to_neighbour.append(neighbour)
+
+            extra_cost = 1
+            neighbour_cost = extra_cost + path_cost_till_now
+            new_element = (neighbour_cost, path_to_neighbour)
+
+            is_there, indexx, neighbour_old_cost, _ = get_frontier_params_new(neighbour, frontier)
+
+            if (neighbour not in explored_nodes) and not is_there:
+                frontier.append(new_element)
+            # If the neighbour is in frontier but there exists a
+            # costlier path to this neighbour, remove that costly path
+            elif is_there:
+                if neighbour_old_cost > neighbour_cost:
+                    frontier.pop(indexx)
+                    frontier.append(new_element)
+
+    return None, None
+
+
+def is_this_node_in_frontier(node, frontier):
+    for path in frontier:
+        if node == path[-1]:
+            return True
+    return False
+
+
+# Search for the best path using A* Algorithm
+
+def astar_search(graph, start, goal):
+    path = []
+    explored_nodes = list()
+
+    # Edge case check
+    if start == goal:
+        return path, explored_nodes
+
+    path.append(start)
+    path_cost = get_manhattan_heuristic(start, goal)
+    # Priority Queue to keep sorted distance travelled till now
+    frontier = [(path_cost, path)]
+    while len(frontier) > 0:
+        # pop a node from the queue
+        path_cost_till_now, path_till_now = pop_frontier(frontier)
+        current_node = path_till_now[-1]
+        path_cost_till_now = path_cost_till_now - get_manhattan_heuristic(current_node, goal)
+        explored_nodes.append(current_node)
+        # test goal condition
+        if current_node == goal:
+            return path_till_now, explored_nodes
+
+        neighbours = graph[current_node]
+
+        neighbours_list_int = [int(n) for n in neighbours]
+        neighbours_list_int.sort(reverse=False)
+        neighbours_list_str = [str(n) for n in neighbours_list_int]
+
+        for neighbour in neighbours_list_str:
+            path_to_neighbour = path_till_now.copy()
+            path_to_neighbour.append(neighbour)
+
+            # extra_cost = graph.get_edge_weight(current_node, neighbour)
+            extra_cost = 1
+            neighbour_cost = extra_cost + path_cost_till_now + get_manhattan_heuristic(neighbour, goal)
+            new_element = (neighbour_cost, path_to_neighbour)
+
+            is_there, indexx, neighbour_old_cost, _ = get_frontier_params_new(neighbour, frontier)
+
+            if (neighbour not in explored_nodes) and not is_there:
+                frontier.append(new_element)
+
+            # If the neighbour is in frontier but there exists a
+            # costlier path to this neighbour, remove that costly path
+            elif is_there:
+                if neighbour_old_cost > neighbour_cost:
+                    frontier.pop(indexx)
+                    frontier.append(new_element)
+
+    return None, None
+
+
+def pop_frontier(frontier):
+    if len(frontier) == 0:
+        return None
+    # copied_list = frontier.copy()
+    min = max_possible_value
+    max_values = []
+    for key, path in frontier:
+        if key == min:
+            max_values.append(path)
+        elif key < min:
+            min = key
+            max_values.clear()
+            max_values.append(path)
+
+    max_values = sorted(max_values, key=lambda x: x[-1])
+    # max_values.sort()
+    desired_value = max_values[0]
+    frontier.remove((min, max_values[0]))
+    return min, desired_value
+
+
+def get_frontier_params_new(node, frontier):
+    for i in range(len(frontier)):
+        curr_tuple = frontier[i]
+        cost, path = curr_tuple
+        if path[-1] == node:
+            return True, i, cost, path
+
+    return False, None, None, None
+
+
+def get_frontier_params(node, frontier):
+    for i in range(len(frontier.queue)):
+        curr_tuple = frontier.queue[i]
+        cost, path = curr_tuple
+        if path[-1] == node:
+            return True, i, cost, path
+
+    return False, None, None, None
+
+
+def get_manhattan_heuristic(node, goal):
+    i, j = divmod(int(node), 8)
+    i_goal, j_goal = divmod(int(goal), 8)
+    i_delta = abs(i - i_goal)
+    j_delta = abs(j - j_goal)
+
+    manhattan_dist = i_delta + j_delta
+    return manhattan_dist
+
+
+# main function
+if __name__ == '__main__':
+    graph_neighbours = generate_graph()
+    print("============ Uniform Cost Search ================")
+    path_ucs, explored_ucs = uniform_cost_search(graph_neighbours, '0', '9')
+    pathu=returnpath(path_ucs)
+    print("Path UCS:",pathu)
+    eu=returnpath(explored_ucs)
+    print("Explored Nodes UCS: ",eu)
+
+    print("Total number of Explored Node:" + str(len(explored_ucs)))
+    print()
+
+    print("============ A* Search ================")
+    path_astar, explored_astar = astar_search(graph_neighbours, '0', '9')
+    patha=returnpath(path_astar)
+    print("Path A*:",patha)
+    exp=returnpath(explored_astar)
+    print("Explored Nodes A*: ",exp)
+
+    print("Total number of Explored Node:" + str(len(explored_astar)))
